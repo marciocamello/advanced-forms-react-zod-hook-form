@@ -10,7 +10,7 @@ import supabase from './lib/supabase';
 const createUserSchema = z.object({
     avatar: z.instanceof(FileList)
         .transform(list => list.item(0)!)
-        .refine(file => file?.size < 1000000, 'File size must be less than 1MB'),
+        .refine(file => file?.size < 5 * 1024 * 1024, 'File size must be less than 5MB'),
     name: z.string()
         .nonempty('Name is required')
         .transform(name => {
@@ -76,8 +76,8 @@ function App() {
         });
     }
 
-    function createUser(data: CreateUserData) {
-        supabase.storage.from('form').upload(data.avatar.name, data.avatar);
+    async function createUser(data: CreateUserData) {
+        await supabase().storage.from('form').upload(data.avatar.name, data.avatar);
         setOutput(JSON.stringify(data, null, 2));
     }
 

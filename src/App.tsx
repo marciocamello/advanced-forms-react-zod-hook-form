@@ -2,10 +2,11 @@ import { useState } from 'react';
 
 import './styles/global.css';
 
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, FormProvider, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from "@hookform/resolvers/zod";
 import supabase from './lib/supabase';
+import { Form } from './components/Form';
 
 const createUserSchema = z.object({
     avatar: z.instanceof(FileList)
@@ -51,14 +52,14 @@ type CreateUserData = z.infer<typeof createUserSchema>;
 function App() {
 
     const [output, setOutput] = useState('');
-    const {
-        control,
-        register,
-        handleSubmit,
-        formState: { errors }
-    } = useForm<CreateUserData>({
+    const createUserForm = useForm<CreateUserData>({
         resolver: zodResolver(createUserSchema)
     });
+
+    const {
+        control,
+        handleSubmit,
+    } = createUserForm;
 
     const {
         fields,
@@ -83,108 +84,106 @@ function App() {
 
     return (
         <main className="h-screen bg-zinc-950 flex items-center justify-center flex-col gap-10">
-            <form
-                className="flex flex-col gap-4 w-full max-w-xs"
-                onSubmit={handleSubmit(createUser)}
-            >
-                <div className="flex flex-col gap-1 text-white">
-                    <label htmlFor="Avatar">Avatar</label>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        {...register("avatar")}
-                    />
-                    {errors.avatar && <p className="text-red-500">{errors.avatar.message}</p>}
-                </div>
+            <FormProvider {...createUserForm}>
+                <form
+                    {...{ control }}
+                    className="flex flex-col gap-4 w-full max-w-xs"
+                    onSubmit={handleSubmit(createUser)}
+                >
+                    <Form.Field>
+                        <Form.Label name="Avatar" />
+                        <Form.Input
+                            type="file"
+                            accept="image/*"
+                            name="avatar"
+                        />
+                        <Form.ErrorMessage field="avatar" />
+                    </Form.Field>
 
-                <div className="flex flex-col gap-1 text-white">
-                    <label htmlFor="Name">Name</label>
-                    <input
-                        type="text"
-                        className="border border-zinc-800 px-3 bg-zinc-800 text-white shadow-sm rounded h-10"
-                        {...register("name")}
-                    />
-                    {errors.name && <p className="text-red-500">{errors.name.message}</p>}
-                </div>
+                    <Form.Field>
+                        <Form.Label name="Name" />
+                        <Form.Input
+                            type="text"
+                            name="name"
+                        />
+                        <Form.ErrorMessage field="name" />
+                    </Form.Field>
 
-                <div className="flex flex-col gap-1 text-white">
-                    <label htmlFor="Email">Email</label>
-                    <input
-                        type="email"
-                        className="border border-zinc-800 px-3 bg-zinc-800 text-white shadow-sm rounded h-10"
-                        {...register("email")}
-                    />
-                    {errors.email && <p className="text-red-500">{errors.email.message}</p>}
-                </div>
+                    <Form.Field>
+                        <Form.Label name="Email" />
+                        <Form.Input
+                            type="email"
+                            name="email"
+                        />
+                        <Form.ErrorMessage field="email" />
+                    </Form.Field>
 
-                <div className="flex flex-col gap-1 text-white">
-                    <label htmlFor="Password">Password</label>
-                    <input
-                        type="password"
-                        className="border border-zinc-800 px-3 bg-zinc-800 text-white shadow-sm rounded h-10"
-                        {...register("password")}
-                    />
-                    {errors.password && <p className="text-red-500">{errors.password.message}</p>}
-                </div>
+                    <Form.Field>
+                        <Form.Label name="Password" />
+                        <Form.Input
+                            type="password"
+                            name="password"
+                        />
+                        <Form.ErrorMessage field="password" />
+                    </Form.Field>
 
-                <div className="flex flex-col gap-1 text-white">
-                    <label htmlFor="ConfirmPassword">ConfirmPassword</label>
-                    <input
-                        type="password"
-                        className="border border-zinc-800 px-3 bg-zinc-800 text-white shadow-sm rounded h-10"
-                        {...register("confirmPassword")}
-                    />
-                    {errors.confirmPassword && <p className="text-red-500">{errors.confirmPassword.message}</p>}
-                </div>
+                    <Form.Field>
+                        <Form.Label name="ConfirmPassword" />
+                        <Form.Input
+                            type="password"
+                            name="confirmPassword"
+                        />
+                        <Form.ErrorMessage field="confirmPassword" />
+                    </Form.Field>
 
-                <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between text-white">
-                        <label htmlFor="Skills">Skills</label>
-                        <button
-                            type="button"
-                            className="font-semibold h-10 text-white hover:text-emerald-600 text-sm"
-                            onClick={addNewSkill}
-                        >
-                            Add
-                        </button>
+                    <div className="flex flex-col gap-1">
+                        <Form.Field className="flex items-center justify-between text-white">
+                            <Form.Label name="Skills" />
+                            <button
+                                type="button"
+                                className="font-semibold h-10 text-white hover:text-emerald-600 text-sm"
+                                onClick={addNewSkill}
+                            >
+                                Add
+                            </button>
+                        </Form.Field>
+
+                        {fields.map((field, index) => (
+                            <div key={field.id} className="flex gap-2">
+                                <div className="flex  gap-2 text-white">
+                                    <Form.Field className="flex flex-1 flex-col gap-1">
+                                        <Form.Input
+                                            type="text"
+                                            name={`skills.${index}.name`}
+                                        />
+
+                                        <Form.ErrorMessage field={`skills.${index}.name`} />
+                                    </Form.Field>
+                                    <Form.Field className="flex flex-col gap-1">
+                                        <Form.Input
+                                            type="number"
+                                            name={`skills.${index}.level`}
+                                            className="w-16 border border-zinc-800 px-3 bg-zinc-800 text-white shadow-sm rounded h-10"
+                                        />
+                                        <Form.ErrorMessage field={`skills.${index}.level`} />
+                                    </Form.Field>
+                                    <button
+                                        type="button"
+                                        className="bg-red-500 rounded font-semibold h-10 w-10 text-white hover:bg-red-600"
+                                        onClick={() => remove(index)}
+                                    >
+                                        X
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+
+                        <Form.ErrorMessage field="skills" />
                     </div>
 
-                    {fields.map((field, index) => (
-                        <div key={field.id} className="flex gap-2">
-                            <div className="flex  gap-2 text-white">
-                                <div className="flex flex-1 flex-col gap-1">
-                                    <input
-                                        type="text"
-                                        className=" border border-zinc-800 px-3 bg-zinc-800 text-white shadow-sm rounded h-10"
-                                        {...register(`skills.${index}.name` as const)}
-                                    />
-
-                                    {errors.skills?.[index]?.name && <p className="text-red-500">{errors.skills[index]?.name?.message}</p>}
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                    <input
-                                        type="number"
-                                        className="w-16 border border-zinc-800 px-3 bg-zinc-800 text-white shadow-sm rounded h-10"
-                                        {...register(`skills.${index}.level` as const)}
-                                    />
-                                    {errors.skills?.[index]?.level && <p className="text-red-500">{errors.skills[index]?.level?.message}</p>}
-                                </div>
-                                <button
-                                    type="button"
-                                    className="bg-red-500 rounded font-semibold h-10 w-10 text-white hover:bg-red-600"
-                                    onClick={() => remove(index)}
-                                >
-                                    X
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-
-                    {errors.skills && <p className="text-red-500">{errors.skills.message}</p>}
-                </div>
-
-                <button type="submit" className="bg-emerald-500 rounded font-semibold h-10 text-white hover:bg-emerald-600">Login</button>
-            </form>
+                    <button type="submit" className="bg-emerald-500 rounded font-semibold h-10 text-white hover:bg-emerald-600">Login</button>
+                </form>
+            </FormProvider>
 
             <pre className="text-white">{output}</pre>
         </main>
